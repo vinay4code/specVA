@@ -154,15 +154,16 @@ def normalize_data(data):
 # --- SIDEBAR UI ---
 with st.sidebar:
     try:
-        # Placeholder for logo
+        # Try to load the logo image
+        st.image("Nakshatra_transparent_1.png", use_container_width=True)
+    except Exception:
+        # Fallback text logo if image fails
         st.markdown("""
         <div style='text-align: center; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 20px;'>
             <h1 style='margin:0; color: #FF4B4B;'>🔭</h1>
             <h3 style='margin:0;'>N-SIGHT</h3>
         </div>
         """, unsafe_allow_html=True)
-    except Exception:
-        pass
 
     st.markdown("### **Nakshatra Club NITT**")
     st.caption("Telescope Team • Spectroscopy Division")
