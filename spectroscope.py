@@ -40,7 +40,7 @@ def normalize_data(data):
     """Normalize data between 0 and 1."""
     return (data - np.min(data)) / (np.max(data) - np.min(data))
 
-# --- SIDEBAR UI ---
+# --- SIDEBAR UI (CONTROLS ONLY) ---
 with st.sidebar:
     # 1. LOGO SECTION
     try:
@@ -54,11 +54,8 @@ with st.sidebar:
     st.caption("Telescope Team • Spectroscopy Division")
     st.divider()
     
-    # 2. INPUTS
-    st.header("1. Data Input")
-    uploaded_file = st.file_uploader("Upload FITS File", type=["fit", "fits"])
-    
-    st.header("2. Calibration")
+    # 2. CALIBRATION (Keep in sidebar to save space)
+    st.header("⚙️ Calibration")
     st.info("Map pixels to Angstroms")
     
     cal_mode = st.radio("Mode", ["Manual Calibration", "Auto (From Header)"])
@@ -74,7 +71,9 @@ with st.sidebar:
             dispersion = st.number_input("Dispersion (Å/px)", value=1.5, step=0.01)
     
     st.divider()
-    st.header("3. Analysis Tools")
+    
+    # 3. ANALYSIS TOOLS
+    st.header("🔍 Analysis Tools")
     
     # Smoothing Slider
     smoothing_window = st.slider("Noise Reduction (Smoothing)", min_value=1, max_value=51, value=1, step=2)
@@ -89,7 +88,9 @@ with st.sidebar:
     show_ref_lines = st.multiselect("Show Reference Lines", options=list(COMMON_LINES.keys()), default=[])
 
     st.divider()
-    st.header("4. Display Options")
+    
+    # 4. DISPLAY OPTIONS
+    st.header("🎨 Display Options")
     show_grid = st.checkbox("Show Grid", value=True)
     normalize = st.checkbox("Normalize Intensity (0-1)", value=False)
     invert_yaxis = st.checkbox("Invert Y-Axis (Magnitudes)", value=False)
@@ -98,6 +99,10 @@ with st.sidebar:
 st.title("🌌 Nakshatra Spectral Analyzer")
 st.markdown("**Telescope Team Project** | National Institute of Technology, Trichy")
 st.markdown("---")
+
+# --- DATA INPUT SECTION (MOVED TO MAIN SCREEN) ---
+st.subheader("📂 Data Input")
+uploaded_file = st.file_uploader("Upload your FITS file here to begin analysis", type=["fit", "fits"])
 
 # --- MAIN LOGIC ---
 
@@ -226,8 +231,8 @@ if uploaded_file is not None:
         st.error(f"Error processing file: {e}")
 
 else:
-    # Landing page
-    st.info("👈 Upload a FITS file to begin analysis.")
+    # Landing page content (Only shown when no file is uploaded)
+    st.info("👈 Upload a FITS file above to begin analysis.")
     st.write("Welcome to Nakshatra SpecLab. This tool allows the Telescope Team to analyze spectral data.")
     
     if st.button("Generate & Download Demo FITS"):
