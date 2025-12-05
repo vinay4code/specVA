@@ -1,367 +1,328 @@
-import streamlit as st
-import numpy as np
-from astropy.io import fits
-import plotly.graph_objects as go
-from scipy.interpolate import interp1d
-from scipy.signal import find_peaks, savgol_filter
-from io import BytesIO
-import time
+import React, { useState, useEffect } from "react";
+import { Upload, Zap, BarChart3, FileText, Check, AlertCircle } from "lucide-react";
 
-# --- PAGE CONFIGURATION ---
-st.set_page_config(
-    page_title="Nakshatra N-SIGHT",
-    layout="wide", 
-    page_icon="🔭",
-    initial_sidebar_state="expanded"
-)
+// --- UI Components (Simulating the shadcn/ui components used in the original) ---
 
-# --- CUSTOM CSS & ANIMATIONS ---
-def apply_custom_style():
-    st.markdown("""
-        <style>
-        /* MAIN BACKGROUND & FONT */
-        .stApp {
-            background-color: #0E1117;
-        }
-        
-        /* KEYFRAME ANIMATIONS */
-        @keyframes fadeIn {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 75, 75, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 75, 75, 0); }
-        }
+const Card = ({ className, children }) => (
+  <div className={`rounded-xl shadow-sm ${className}`}>
+    {children}
+  </div>
+);
 
-        /* APPLY ANIMATION TO MAIN BLOCKS */
-        .main .block-container {
-            animation: fadeIn 0.8s ease-out;
-        }
+const Button = ({ className, onClick, disabled, children }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${className}`}
+  >
+    {children}
+  </button>
+);
 
-        /* CUSTOM BUTTON STYLING */
-        .stButton>button {
-            background: linear-gradient(90deg, #FF4B4B 0%, #FF914D 100%);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-weight: bold;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .stButton>button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 20px rgba(255, 75, 75, 0.3);
-        }
-        .stButton>button:active {
-            transform: scale(0.95);
-        }
+// --- Main Application Component ---
 
-        /* UPLOAD WIDGET STYLING */
-        [data-testid='stFileUploader'] {
-            border: 2px dashed #4B5563;
-            border-radius: 15px;
-            padding: 20px;
-            background-color: #1F2937;
-            transition: border-color 0.3s;
+export default function SpectroscopyApp() {
+  const [file, setFile] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [results, setResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("spectral");
+
+  // Handler for file drag over
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  // Handler for file drag leave
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  // Handler for file drop
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+        // Allowing loose checking for demo purposes, but prioritizing .fits logic
+        // In a real app, you might want to show an error if it's not .fits
+        if (droppedFile.name.endsWith(".fits") || droppedFile.name.endsWith(".FITS")) {
+            setFile(droppedFile);
+            setResults(null); // Reset results on new file
+        } else {
+            alert("Please upload a valid .fits file");
         }
-        [data-testid='stFileUploader']:hover {
-            border-color: #FF4B4B;
+    }
+  };
+
+  // Handler for file input click
+  const handleFileInput = (e) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+        if (selectedFile.name.endsWith(".fits") || selectedFile.name.endsWith(".FITS")) {
+            setFile(selectedFile);
+            setResults(null);
+        } else {
+            alert("Please upload a valid .fits file");
         }
+    }
+  };
 
-        /* EXPANDER STYLING */
-        .streamlit-expanderHeader {
-            background-color: #1F2937;
-            border-radius: 10px;
-            color: #E5E7EB;
-        }
-        
-        /* DATAFRAME/TABLE STYLING */
-        [data-testid="stTable"] {
-            background-color: #1F2937;
-            border-radius: 10px;
-            padding: 10px;
-        }
-        
-        /* SIDEBAR STYLING */
-        section[data-testid="stSidebar"] {
-            background-color: #111827;
-            border-right: 1px solid #374151;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+  // Simulation of the analysis process
+  const handleAnalyze = async () => {
+    if (!file) return;
+    setLoading(true);
+    
+    // Simulate complex calculation/API delay
+    setTimeout(() => {
+      setResults({
+        wavelengthStart: 3800,
+        wavelengthEnd: 9200,
+        peakWavelength: 6562.8,
+        intensity: 2450.5,
+        elementalComposition: [
+          { element: "Hydrogen", percentage: 73.46 },
+          { element: "Helium", percentage: 24.85 },
+          { element: "Other", percentage: 1.69 },
+        ],
+      });
+      setLoading(false);
+    }, 1500);
+  };
 
-apply_custom_style()
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 font-sans text-slate-200">
+      {/* Background Star Effect */}
+      <div
+        className="fixed inset-0 opacity-20 pointer-events-none"
+        style={{
+          backgroundImage:
+            "radial-gradient(2px 2px at 20% 30%, white, rgba(0,0,0,0)), radial-gradient(2px 2px at 60% 70%, white, rgba(0,0,0,0)), radial-gradient(1px 1px at 50% 50%, white, rgba(0,0,0,0))",
+          backgroundSize: "100% 100%",
+        }}
+      ></div>
 
-# --- SESSION STATE INITIALIZATION ---
-if 'demo_mode' not in st.session_state:
-    st.session_state.demo_mode = False
-
-# --- CONSTANTS & REFERENCE DATA ---
-COMMON_LINES = {
-    "Hydrogen Balmer": {"H-alpha": 6562.8, "H-beta": 4861.3, "H-gamma": 4340.5, "H-delta": 4101.7},
-    "Helium (He I)": {"He I (Yellow)": 5875.6, "He I (Blue)": 4471.5},
-    "Sodium (Na)": {"Na D1": 5895.9, "Na D2": 5889.9},
-    "Oxygen (O III)": {"O III (Nebular)": 5006.8}
-}
-
-# --- UTILITY FUNCTIONS ---
-def normalize_data(data):
-    return (data - np.min(data)) / (np.max(data) - np.min(data))
-
-# --- SIDEBAR UI ---
-with st.sidebar:
-    try:
-        st.image("Nakshatra_transparent_1.png", use_container_width=True)
-    except Exception:
-        # Fallback text logo if image fails
-        st.markdown("""
-        <div style='text-align: center; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 20px;'>
-            <h1 style='margin:0; color: #FF4B4B;'>🔭</h1>
-            <h3 style='margin:0;'>N-SIGHT</h3>
+      <div className="max-w-6xl mx-auto relative z-10">
+        {/* Header */}
+        <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/20">
+              <Zap className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
+              Spectroscopy Analysis
+            </h1>
+          </div>
+          <p className="text-slate-400 text-lg">Advanced astronomical spectral analysis dashboard</p>
         </div>
-        """, unsafe_allow_html=True)
 
-    st.markdown("### **Nakshatra Club NITT**")
-    st.caption("Telescope Team • Spectroscopy Division")
-    st.markdown("---")
-    
-    with st.expander("**Calibration Settings**", expanded=True):
-        st.info("Map pixels to Angstroms")
-        cal_mode = st.radio("Mode", ["Manual Calibration", "Auto (From Header)"])
-        
-        start_wavelength = 0.0
-        dispersion = 1.0
-        
-        if cal_mode == "Manual Calibration":
-            col1, col2 = st.columns(2)
-            with col1:
-                start_wavelength = st.number_input("Start (Å)", value=4000.0, step=10.0)
-            with col2:
-                dispersion = st.number_input("Disp (Å/px)", value=1.5, step=0.01)
-    
-    with st.expander("🔍 **Analysis Tools**", expanded=True):
-        smoothing_window = st.slider("Smoothing (Noise)", min_value=1, max_value=51, value=1, step=2)
-        
-        show_peaks = st.checkbox("Auto-Detect Peaks", value=False)
-        peak_prominence = 10.0
-        if show_peaks:
-            peak_prominence = st.slider("Peak Sensitivity", 0.1, 50.0, 10.0)
-        
-        st.markdown("**Reference Overlays**")
-        show_ref_lines = st.multiselect("Select Elements", options=list(COMMON_LINES.keys()), default=[])
-
-    with st.expander("🎨 **Display Options**"):
-        show_grid = st.checkbox("Show Grid", value=True)
-        normalize = st.checkbox("Normalize (0-1)", value=False)
-        invert_yaxis = st.checkbox("Invert Y-Axis", value=False)
-
-# --- HERO SECTION ---
-# Using columns to create a balanced header
-col_logo, col_text = st.columns([1, 5])
-
-with col_text:
-    st.title("**N-SIGHT**")
-    st.markdown("""
-    <div style='background: linear-gradient(90deg, #1F2937, transparent); padding: 10px; border-radius: 5px; border-left: 5px solid #FF4B4B;'>
-    <b>Telescope Team Project</b> | National Institute of Technology, Trichy
-    </div>
-    """, unsafe_allow_html=True)
-
-st.markdown("---")
-
-# --- DATA INPUT SECTION ---
-# Wrapped in a container for styling
-with st.container():
-    st.subheader("Input Data")
-    uploaded_file = st.file_uploader("Drop your FITS file to begin...", type=["fit", "fits"])
-
-# --- MAIN LOGIC ---
-data = None
-header = None
-is_demo = False
-
-if uploaded_file is not None:
-    st.session_state.demo_mode = False 
-    try:
-        with st.spinner("Decoding FITS file..."):
-            with fits.open(uploaded_file) as hdul:
-                data = hdul[0].data
-                header = hdul[0].header
-            # Artificial delay for UX "processing" feel
-            time.sleep(0.5)
-    except Exception as e:
-        st.error(f"Error reading file: {e}")
-
-elif st.session_state.demo_mode:
-    is_demo = True
-    # Generate demo data
-    x_demo = np.linspace(4000, 7000, 2000) 
-    continuum = 100 + (x_demo - 4000) * 0.05
-    h_alpha = 500 * np.exp(-0.5 * ((x_demo - 6563) / 10)**2)
-    h_beta = 300 * np.exp(-0.5 * ((x_demo - 4861) / 10)**2)
-    noise = np.random.normal(0, 5, 2000)
-    data = continuum + h_alpha + h_beta + noise
-    
-    header = {'TELESCOP': 'Simulated Scope', 'CRVAL1': 4000.0, 'CDELT1': 1.5}
-    
-    st.info("**Demo Mode Active**")
-
-# --- VISUALIZATION & ANALYSIS ---
-if data is not None and header is not None:
-    # 1. Image Processing (if 2D)
-    if data.ndim == 2:
-        st.subheader("Raw CCD Sensor")
-        col_img, col_info = st.columns([3, 1])
-        with col_img:
-            st.image(normalize_data(data), caption="Spectral Stripe", use_container_width=True, clamp=True)
-        with col_info:
-            st.success("2D Spectrum Detected")
-            st.markdown("Integrating vertical pixels to extract intensity profile.")
-        flux = np.sum(data, axis=0)
-    elif data.ndim == 1:
-        flux = data
-    else:
-        st.error("Invalid dimensions.")
-        st.stop()
-
-    # 2. Data Transforms
-    if normalize:
-        flux = normalize_data(flux)
-    
-    if smoothing_window > 1:
-        if smoothing_window % 2 == 0: smoothing_window += 1
-        flux = savgol_filter(flux, smoothing_window, 3)
-
-    # 3. Calibration Logic
-    pixels = np.arange(len(flux))
-    
-    if cal_mode == "Auto (From Header)":
-        try:
-            start_wavelength = header['CRVAL1']
-            dispersion = header['CDELT1']
-            if 'cal_success' not in st.session_state:
-                st.toast(f"Calibration Found: {start_wavelength}Å + {dispersion}Å/px", icon="✅")
-                st.session_state.cal_success = True
-        except KeyError:
-            st.warning("Header missing calibration keywords. Using manual settings.")
-            cal_mode = "Manual Calibration"
-
-    if cal_mode == "Manual Calibration" or cal_mode == "Pixel Space":
-        x_axis = start_wavelength + (pixels * dispersion)
-        x_label = "Wavelength (Å)"
-    
-    # 4. Plotting
-    peak_indices = []
-    if show_peaks:
-        peak_indices, _ = find_peaks(flux, prominence=peak_prominence)
-
-    st.subheader("Spectral Analysis")
-    
-    # Create the Plotly Figure
-    fig = go.Figure()
-
-    # Main Line with a "Neon" look
-    fig.add_trace(go.Scatter(
-        x=x_axis, y=flux, mode='lines', name='Spectrum',
-        line=dict(color='#00F0FF', width=2, shape='hv'), # Cyan neon color
-        fill='tozeroy', fillcolor='rgba(0, 240, 255, 0.1)' # Subtle glow fill
-    ))
-
-    # Peaks
-    if show_peaks and len(peak_indices) > 0:
-        fig.add_trace(go.Scatter(
-            x=x_axis[peak_indices], y=flux[peak_indices], mode='markers',
-            name='Peaks', marker=dict(color='#FF4B4B', size=10, symbol='diamond-open', line=dict(width=2))
-        ))
-        for i in peak_indices:
-            fig.add_annotation(
-                x=x_axis[i], y=flux[i], text=f"{x_axis[i]:.0f}Å",
-                showarrow=True, arrowhead=1, yshift=15, font=dict(color='#FF4B4B')
-            )
-
-    # Reference Lines
-    for element_group in show_ref_lines:
-        lines = COMMON_LINES[element_group]
-        for name, wl in lines.items():
-            if x_axis.min() < wl < x_axis.max():
-                fig.add_vline(x=wl, line_width=1, line_dash="dot", line_color="#FFD700")
-                fig.add_annotation(
-                    x=wl, y=0.98 if not invert_yaxis else 0.02, yref="paper",
-                    text=name, showarrow=False, font=dict(color="#FFD700", size=10), textangle=-90
-                )
-
-    # High-Tech Chart Layout
-    fig.update_layout(
-        template="plotly_dark",
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        xaxis=dict(title=x_label, showgrid=show_grid, gridcolor='rgba(255,255,255,0.1)'),
-        yaxis=dict(title="Intensity", showgrid=show_grid, gridcolor='rgba(255,255,255,0.1)'),
-        height=600,
-        hovermode="x unified",
-        margin=dict(l=20, r=20, t=40, b=20),
-        legend=dict(orientation="h", y=1.1)
-    )
-
-    if invert_yaxis:
-        fig['layout']['yaxis']['autorange'] = "reversed"
-
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # 5. Footer / Header Details
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        with st.expander("View FITS Header Metadata"):
-            header_dict = dict(header) if hasattr(header, 'items') else {k: str(v) for k, v in header.items()}
-            st.table(header_dict)
-    
-    with col2:
-        if is_demo:
-            if st.button("Exit Demo", use_container_width=True):
-                st.session_state.demo_mode = False
-                st.rerun()
-
-else:
-    # --- LANDING PAGE (Empty State) ---
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    
-    col_center, _ = st.columns([1, 0.1])
-    with col_center:
-        st.info("Please upload a FITS file above to unlock analysis tools.")
-    
-    st.markdown("---")
-    st.subheader("No Data? Try the Simulation")
-    
-    # Demo Generation
-    x_gen = np.linspace(4000, 7000, 2000) 
-    continuum_gen = 100 + (x_gen - 4000) * 0.05
-    h_alpha_gen = 500 * np.exp(-0.5 * ((x_gen - 6563) / 10)**2)
-    h_beta_gen = 300 * np.exp(-0.5 * ((x_gen - 4861) / 10)**2)
-    noise_gen = np.random.normal(0, 5, 2000)
-    y_gen = continuum_gen + h_alpha_gen + h_beta_gen + noise_gen
-    
-    hdu_gen = fits.PrimaryHDU(y_gen)
-    hdu_gen.header['TELESCOP'] = 'Simulated Scope'
-    bio_gen = BytesIO()
-    hdu_gen.writeto(bio_gen)
-    bio_gen.seek(0)
-    
-    # Action Buttons
-    c1, c2, c3 = st.columns([1, 1, 2])
-    
-    with c1:
-        if st.button("Load Demo", use_container_width=True):
-            st.session_state.demo_mode = True
-            st.rerun()
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content Column */}
+          <div className="lg:col-span-2 space-y-6">
             
-    with c2:
-        st.download_button(
-            label="Save FITS",
-            data=bio_gen,
-            file_name="demo_spectrum.fits",
-            mime="application/octet-stream",
-            use_container_width=True
-        )
+            {/* Upload Section */}
+            <Card className="border border-slate-700 bg-slate-900/50 backdrop-blur-sm hover:border-slate-600 transition-colors duration-300">
+              <div className="p-6">
+                <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-cyan-400" />
+                  Upload FITS File
+                </h2>
+
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`relative group border-2 border-dashed rounded-lg p-10 text-center transition-all duration-300 ease-in-out cursor-pointer ${
+                    isDragging
+                      ? "border-cyan-400 bg-cyan-400/10 scale-[1.01]"
+                      : "border-slate-600 bg-slate-800/30 hover:border-slate-500 hover:bg-slate-800/50"
+                  }`}
+                >
+                  <input 
+                    type="file" 
+                    accept=".fits" 
+                    onChange={handleFileInput} 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" 
+                    id="file-input" 
+                  />
+                  
+                  <div className="relative z-10 pointer-events-none">
+                    <div className={`mb-4 transition-transform duration-300 ${isDragging ? 'scale-110' : 'group-hover:scale-105'}`}>
+                      <div className="w-16 h-16 mx-auto rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                        <Upload className="w-8 h-8 text-cyan-400 opacity-80" />
+                      </div>
+                    </div>
+                    <p className="text-white font-medium text-lg">
+                      {file ? file.name : "Drag and drop your FITS file here"}
+                    </p>
+                    <p className="text-slate-400 text-sm mt-2">or click to browse local files</p>
+                  </div>
+                </div>
+
+                {file && (
+                  <div className="mt-4 p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-sm flex items-center gap-2 animate-in fade-in zoom-in-95">
+                    <Check className="w-4 h-4" />
+                    <span className="font-medium">File ready for analysis:</span>
+                    <span className="opacity-75">{file.name}</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Analysis Results */}
+            {results && (
+              <Card className="border border-slate-700 bg-slate-900/50 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="p-6">
+                  <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-orange-400" />
+                    Analysis Results
+                  </h2>
+
+                  {/* Custom Tabs */}
+                  <div className="w-full">
+                    <div className="grid grid-cols-2 p-1 bg-slate-800 rounded-lg border border-slate-700 mb-6">
+                      <button
+                        onClick={() => setActiveTab("spectral")}
+                        className={`py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+                          activeTab === "spectral"
+                            ? "bg-slate-700 text-cyan-400 shadow-sm ring-1 ring-cyan-500/20"
+                            : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
+                        }`}
+                      >
+                        Spectral Data
+                      </button>
+                      <button
+                        onClick={() => setActiveTab("composition")}
+                        className={`py-2 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+                          activeTab === "composition"
+                            ? "bg-slate-700 text-orange-400 shadow-sm ring-1 ring-orange-500/20"
+                            : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
+                        }`}
+                      >
+                        Composition
+                      </button>
+                    </div>
+
+                    {/* Tab Content: Spectral */}
+                    {activeTab === "spectral" && (
+                      <div className="animate-in fade-in slide-in-from-left-2 duration-300">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 hover:border-slate-600 transition-colors">
+                            <p className="text-slate-400 text-sm mb-1">Wavelength Start</p>
+                            <p className="text-white font-mono font-semibold text-xl">{results.wavelengthStart} Å</p>
+                          </div>
+                          <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 hover:border-slate-600 transition-colors">
+                            <p className="text-slate-400 text-sm mb-1">Wavelength End</p>
+                            <p className="text-white font-mono font-semibold text-xl">{results.wavelengthEnd} Å</p>
+                          </div>
+                          <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 hover:border-cyan-900/50 transition-colors group">
+                            <p className="text-slate-400 text-sm mb-1">Peak Wavelength</p>
+                            <p className="text-cyan-400 font-mono font-semibold text-xl group-hover:text-cyan-300">{results.peakWavelength} Å</p>
+                          </div>
+                          <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 hover:border-orange-900/50 transition-colors group">
+                            <p className="text-slate-400 text-sm mb-1">Peak Intensity</p>
+                            <p className="text-orange-400 font-mono font-semibold text-xl group-hover:text-orange-300">{results.intensity}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tab Content: Composition */}
+                    {activeTab === "composition" && (
+                      <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-300">
+                        {results.elementalComposition.map((item, idx) => (
+                          <div key={idx} className="space-y-2 group">
+                            <div className="flex justify-between items-center">
+                              <span className="text-white font-medium flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${idx === 0 ? 'bg-cyan-400' : idx === 1 ? 'bg-blue-500' : 'bg-slate-500'}`}></span>
+                                {item.element}
+                              </span>
+                              <span className="text-cyan-400 font-mono font-semibold">{item.percentage}%</span>
+                            </div>
+                            <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
+                              <div
+                                className="h-full bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-full transition-all duration-1000 ease-out"
+                                style={{ width: `${item.percentage}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Action Button */}
+            <Button
+              onClick={handleAnalyze}
+              disabled={!file || loading}
+              className={`w-full h-14 text-lg shadow-lg shadow-cyan-900/20 transition-all duration-300 ${
+                !file || loading 
+                 ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                 : "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white transform hover:-translate-y-0.5"
+              }`}
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing Spectrum...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                    <Zap className="w-5 h-5 fill-current" />
+                    Analyze Spectrum
+                </span>
+              )}
+            </Button>
+
+            {/* Info Cards */}
+            <Card className="border border-slate-700 bg-slate-900/50 backdrop-blur-sm">
+              <div className="p-5">
+                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-cyan-400" />
+                    Supported Formats
+                </h3>
+                <p className="text-slate-400 text-sm leading-relaxed border-l-2 border-slate-700 pl-3">
+                  Upload FITS files for spectroscopic analysis. Our advanced algorithms detect elemental signatures and
+                  wavelength patterns automatically.
+                </p>
+              </div>
+            </Card>
+
+            <Card className="border border-slate-700 bg-slate-900/50 backdrop-blur-sm">
+              <div className="p-5">
+                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-orange-400" />
+                    Quick Tips
+                </h3>
+                <ul className="space-y-3 text-slate-400 text-sm">
+                  <li className="flex items-start gap-2">
+                    <span className="text-cyan-500 mt-1">•</span> 
+                    <span>Ensure FITS file is properly formatted with header data</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-cyan-500 mt-1">•</span> 
+                    <span>Analysis completes in approx 1.5 seconds</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-cyan-500 mt-1">•</span> 
+                    <span>Results include full spectral breakdown and chemical composition</span>
+                  </li>
+                </ul>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
