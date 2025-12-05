@@ -97,7 +97,7 @@ with st.sidebar:
 
 # --- MAIN PAGE HEADER ---
 st.title("**N-SIGHT**")
-st.markdown("**Telescope Team Project** | National Institute of Technology, Trichy")
+st.markdown("(Nakshatra Spectroscopy Insight Generating High-tech Tool)")
 st.markdown("---")
 
 # --- DATA INPUT SECTION (MOVED TO MAIN SCREEN) ---
@@ -250,6 +250,7 @@ else:
         bio.seek(0)
         
         st.download_button("Download demo_spectrum.fits", data=bio, file_name="demo_spectrum.fits")
+
 
 
 
