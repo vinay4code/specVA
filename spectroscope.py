@@ -6,8 +6,13 @@ from scipy.interpolate import interp1d
 from scipy.signal import find_peaks, savgol_filter
 from io import BytesIO
 
-# Page Configuration
-st.set_page_config(page_title="AstroSpec Analyzer", layout="wide", page_icon="🌈")
+# --- PAGE CONFIGURATION ---
+st.set_page_config(
+    page_title="Nakshatra SpecLab",
+    layout="wide", 
+    page_icon="🔭",
+    initial_sidebar_state="expanded"
+)
 
 # --- CONSTANTS & REFERENCE DATA ---
 COMMON_LINES = {
@@ -31,18 +36,25 @@ COMMON_LINES = {
 }
 
 # --- UTILITY FUNCTIONS ---
-
 def normalize_data(data):
     """Normalize data between 0 and 1."""
     return (data - np.min(data)) / (np.max(data) - np.min(data))
 
-# --- MAIN APP UI ---
-
-st.title("🔭 Amateur Spectroscopy Analyzer")
-st.markdown("Upload your **.fit** or **.fits** file to visualize the spectrum, calibrate wavelengths, and analyze absorption/emission lines.")
-
-# Sidebar for controls
+# --- SIDEBAR UI ---
 with st.sidebar:
+    # 1. LOGO SECTION
+    try:
+        # Looks for the image in the main GitHub folder
+        st.image("Nakshatra_transparent_1.png", use_container_width=True)
+    except Exception:
+        # Fallback if image is missing
+        st.warning("⚠️ Logo 'Nakshatra_transparent_1.png' not found.")
+
+    st.header("✨ Nakshatra Club NITT") 
+    st.caption("Telescope Team • Spectroscopy Division")
+    st.divider()
+    
+    # 2. INPUTS
     st.header("1. Data Input")
     uploaded_file = st.file_uploader("Upload FITS File", type=["fit", "fits"])
     
@@ -64,8 +76,8 @@ with st.sidebar:
     st.divider()
     st.header("3. Analysis Tools")
     
-    # Smoothing
-    smoothing_window = st.slider("Noise Reduction (Smoothing)", min_value=1, max_value=51, value=1, step=2, help="Higher values make the line smoother but might hide small details.")
+    # Smoothing Slider
+    smoothing_window = st.slider("Noise Reduction (Smoothing)", min_value=1, max_value=51, value=1, step=2)
     
     # Peak Finding
     show_peaks = st.checkbox("Auto-Detect Peaks", value=False)
@@ -82,6 +94,11 @@ with st.sidebar:
     normalize = st.checkbox("Normalize Intensity (0-1)", value=False)
     invert_yaxis = st.checkbox("Invert Y-Axis (Magnitudes)", value=False)
 
+# --- MAIN PAGE HEADER ---
+st.title("🌌 Nakshatra Spectral Analyzer")
+st.markdown("**Telescope Team Project** | National Institute of Technology, Trichy")
+st.markdown("---")
+
 # --- MAIN LOGIC ---
 
 if uploaded_file is not None:
@@ -96,7 +113,6 @@ if uploaded_file is not None:
                 st.stop()
 
             # --- DATA PROCESSING ---
-            
             # Handle 2D Images
             if data.ndim == 2:
                 st.subheader("Raw Sensor Data")
@@ -119,12 +135,10 @@ if uploaded_file is not None:
                 
             # Apply Smoothing (Savgol filter)
             if smoothing_window > 1:
-                # Window length must be odd
                 if smoothing_window % 2 == 0: smoothing_window += 1
                 flux = savgol_filter(flux, smoothing_window, 3)
 
             # --- WAVELENGTH CALIBRATION ---
-            
             pixels = np.arange(len(flux))
             
             if cal_mode == "Auto (From Header)":
@@ -136,7 +150,6 @@ if uploaded_file is not None:
                     st.sidebar.error("Header info (CRVAL1/CDELT1) not found. Switching to Manual.")
                     cal_mode = "Manual Calibration"
 
-            # Re-check mode in case auto failed
             if cal_mode == "Manual Calibration" or cal_mode == "Pixel Space":
                 x_axis = start_wavelength + (pixels * dispersion)
                 x_label = "Wavelength (Angstroms)"
@@ -144,18 +157,13 @@ if uploaded_file is not None:
             # --- PEAK DETECTION ---
             peak_indices = []
             if show_peaks:
-                # Find peaks (positive)
                 peak_indices, _ = find_peaks(flux, prominence=peak_prominence)
-                # If inverted axis, we might look for valleys (absorption lines)
-                # For now, simplistic implementation for emission lines
 
             # --- PLOTTING ---
-            
             st.subheader("Spectral Analysis")
-
             fig = go.Figure()
 
-            # 1. The Main Spectrum Line
+            # 1. Main Spectrum Line
             fig.add_trace(go.Scatter(
                 x=x_axis, 
                 y=flux, 
@@ -173,8 +181,6 @@ if uploaded_file is not None:
                     name='Detected Peaks',
                     marker=dict(color='red', size=8, symbol='x')
                 ))
-                
-                # Annotate peaks
                 for i in peak_indices:
                     fig.add_annotation(
                         x=x_axis[i], y=flux[i],
@@ -182,21 +188,15 @@ if uploaded_file is not None:
                         showarrow=True, arrowhead=1, yshift=10
                     )
 
-            # 3. Reference Lines Overlay
+            # 3. Reference Lines
             for element_group in show_ref_lines:
                 lines = COMMON_LINES[element_group]
                 for name, wl in lines.items():
-                    # Check if line is within current view range
                     if x_axis.min() < wl < x_axis.max():
                         fig.add_vline(x=wl, line_width=1, line_dash="dash", line_color="yellow")
                         fig.add_annotation(
-                            x=wl, 
-                            y=0.95 if not invert_yaxis else 0.05, 
-                            yref="paper",
-                            text=name, 
-                            showarrow=False, 
-                            font=dict(color="yellow"),
-                            textangle=-90
+                            x=wl, y=0.95 if not invert_yaxis else 0.05, yref="paper",
+                            text=name, showarrow=False, font=dict(color="yellow"), textangle=-90
                         )
 
             # Visual styling
@@ -209,7 +209,6 @@ if uploaded_file is not None:
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
             )
 
-            # Axis configurations
             if invert_yaxis:
                 fig['layout']['yaxis']['autorange'] = "reversed"
             
@@ -218,15 +217,6 @@ if uploaded_file is not None:
 
             st.plotly_chart(fig, use_container_width=True)
             
-            # --- DATA METRICS ---
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Min Intensity", f"{np.min(flux):.2f}")
-            with col2:
-                st.metric("Max Intensity", f"{np.max(flux):.2f}")
-            with col3:
-                st.metric("Spectral Range", f"{x_axis.min():.0f} - {x_axis.max():.0f} Å")
-
             # --- HEADER INSPECTOR ---
             with st.expander("View FITS Header"):
                 header_dict = {k: str(v) for k, v in header.items()}
@@ -238,6 +228,7 @@ if uploaded_file is not None:
 else:
     # Landing page
     st.info("👈 Upload a FITS file to begin analysis.")
+    st.write("Welcome to Nakshatra SpecLab. This tool allows the Telescope Team to analyze spectral data.")
     
     if st.button("Generate & Download Demo FITS"):
         x = np.linspace(4000, 7000, 2000) 
