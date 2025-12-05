@@ -97,7 +97,7 @@ with st.sidebar:
 
 # --- MAIN PAGE HEADER ---
 st.title("**N-SIGHT**")
-st.markdown("(Nakshatra Spectroscopy Insight Generating High-tech Tool)")
+st.markdown("Welcome to N-SIGHT. This tool allows the Telescope Team to analyze spectral data.")
 st.markdown("---")
 
 # --- DATA INPUT SECTION (MOVED TO MAIN SCREEN) ---
@@ -233,7 +233,7 @@ if uploaded_file is not None:
 else:
     # Landing page content (Only shown when no file is uploaded)
     st.info("Upload a FITS file above to begin analysis.")
-    st.write("Welcome to Nakshatra SpecLab. This tool allows the Telescope Team to analyze spectral data.")
+    
     
     if st.button("Generate & Download Demo FITS"):
         x = np.linspace(4000, 7000, 2000) 
@@ -250,6 +250,7 @@ else:
         bio.seek(0)
         
         st.download_button("Download demo_spectrum.fits", data=bio, file_name="demo_spectrum.fits")
+
 
 
 
