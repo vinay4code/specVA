@@ -73,7 +73,7 @@ with st.sidebar:
     st.divider()
     
     # 3. ANALYSIS TOOLS
-    st.header("🔍 Analysis Tools")
+    st.header("Analysis Tools")
     
     # Smoothing Slider
     smoothing_window = st.slider("Noise Reduction (Smoothing)", min_value=1, max_value=51, value=1, step=2)
@@ -90,7 +90,7 @@ with st.sidebar:
     st.divider()
     
     # 4. DISPLAY OPTIONS
-    st.header("🎨 Display Options")
+    st.header("Display Options")
     show_grid = st.checkbox("Show Grid", value=True)
     normalize = st.checkbox("Normalize Intensity (0-1)", value=False)
     invert_yaxis = st.checkbox("Invert Y-Axis (Magnitudes)", value=False)
@@ -250,6 +250,7 @@ else:
         bio.seek(0)
         
         st.download_button("Download demo_spectrum.fits", data=bio, file_name="demo_spectrum.fits")
+
 
 
 
