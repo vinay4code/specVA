@@ -50,12 +50,12 @@ with st.sidebar:
         # Fallback if image is missing
         st.warning("⚠️ Logo 'Nakshatra_transparent_1.png' not found.")
 
-    st.header("✨ Nakshatra Club NITT") 
+    st.header("Nakshatra Club NITT") 
     st.caption("Telescope Team • Spectroscopy Division")
     st.divider()
     
     # 2. CALIBRATION (Keep in sidebar to save space)
-    st.header("⚙️ Calibration")
+    st.header("Calibration")
     st.info("Map pixels to Angstroms")
     
     cal_mode = st.radio("Mode", ["Manual Calibration", "Auto (From Header)"])
@@ -101,7 +101,7 @@ st.markdown("**Telescope Team Project** | National Institute of Technology, Tric
 st.markdown("---")
 
 # --- DATA INPUT SECTION (MOVED TO MAIN SCREEN) ---
-st.subheader("📂 Data Input")
+st.subheader("Data Input")
 uploaded_file = st.file_uploader("Upload your FITS file here to begin analysis", type=["fit", "fits"])
 
 # --- MAIN LOGIC ---
@@ -232,7 +232,7 @@ if uploaded_file is not None:
 
 else:
     # Landing page content (Only shown when no file is uploaded)
-    st.info("👈 Upload a FITS file above to begin analysis.")
+    st.info("Upload a FITS file above to begin analysis.")
     st.write("Welcome to Nakshatra SpecLab. This tool allows the Telescope Team to analyze spectral data.")
     
     if st.button("Generate & Download Demo FITS"):
@@ -249,6 +249,7 @@ else:
         hdu.writeto(bio)
         bio.seek(0)
         
-        st.download_button("⬇️ Download demo_spectrum.fits", data=bio, file_name="demo_spectrum.fits")
+        st.download_button("Download demo_spectrum.fits", data=bio, file_name="demo_spectrum.fits")
+
 
 
