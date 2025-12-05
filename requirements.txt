@@ -1,5 +1,7 @@
 streamlit
-astropy
+opencv-python-headless
 numpy
+astropy
 plotly
 scipy
+pillow
