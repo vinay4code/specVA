@@ -8,7 +8,7 @@ from io import BytesIO
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="Nakshatra SpecLab",
+    page_title="Nakshatra N-SIGHT",
     layout="wide", 
     page_icon="🔭",
     initial_sidebar_state="expanded"
@@ -250,3 +250,4 @@ else:
         bio.seek(0)
         
         st.download_button("⬇️ Download demo_spectrum.fits", data=bio, file_name="demo_spectrum.fits")
+
