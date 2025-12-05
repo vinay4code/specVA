@@ -96,7 +96,7 @@ with st.sidebar:
     invert_yaxis = st.checkbox("Invert Y-Axis (Magnitudes)", value=False)
 
 # --- MAIN PAGE HEADER ---
-st.title("N-SIGHT (Nakshatra Spectroscopy Insight Generating High-tech Tool)")
+st.title("**N-SIGHT**")
 st.markdown("**Telescope Team Project** | National Institute of Technology, Trichy")
 st.markdown("---")
 
@@ -250,6 +250,7 @@ else:
         bio.seek(0)
         
         st.download_button("Download demo_spectrum.fits", data=bio, file_name="demo_spectrum.fits")
+
 
 
 
