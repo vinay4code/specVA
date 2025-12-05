@@ -242,7 +242,7 @@ else:
     # --- LANDING PAGE (No File Loaded) ---
     st.info("Upload a FITS file above to begin analysis.")
     st.write("---")
-    st.subheader("🧪 Practice with Demo Data")
+    st.subheader("Practice with Demo Data")
     
     # Generate the demo data in memory (fast) so it's ready for both buttons
     x_gen = np.linspace(4000, 7000, 2000) 
@@ -263,16 +263,17 @@ else:
     
     with col1:
         # Button 1: View in App
-        if st.button("👁️ View Demo in App", use_container_width=True):
+        if st.button("View Demo in App", use_container_width=True):
             st.session_state.demo_mode = True
             st.rerun()
             
     with col2:
         # Button 2: Download File
         st.download_button(
-            label="⬇️ Download FITS File",
+            label="Download FITS File",
             data=bio_gen,
             file_name="demo_spectrum.fits",
             mime="application/octet-stream",
             use_container_width=True
         )
+
